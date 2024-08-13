@@ -1,83 +1,127 @@
-// Example game initialization script:
+const mainDiv = document.getElementById("mainDiv");
+const gameDiv = document.getElementById("gameDiv");
+const menuDiv = document.getElementById("menuDiv");
+const gameCanvas = document.getElementById("gameCanvas");
+const gameContext = gameCanvas.getContext("2d");
+
+const mobile = navigator.userAgent.search('Mobile') > 0;
+let state = 0;
+
+// global sizes
+const hardWidth = 1080;
+const hardHeight = 1920;
+let width;
+let height;
+let canvasScale;
+//let offsetX;
+//let offsetY;
+
+let interval;
+
+function displayLoading() {
+	state = state == 11 ? 0 : state + 1;
+	menuDiv.innerHTML = `<div style=margin-top:480px;margin-left:48%>${String.fromCodePoint(128336 + state)}</div>`;
+}
+
+// resource characters data (&#x1F{xxx};)
+const resources = ['533', '50a'];
+
+function getEmojiCode(code) {
+	return `</b>&#x1F${resources[code]};<b>`;
+}
+
 function init() {
-	const _div = document.createElement('div');
-	_div.innerHTML = '<div style=color:aqua;text-align:center;margin:20px>JS13k game ready to launch!</div>';
-	document.body.appendChild(_div);
+	window.addEventListener("resize", resize, false);
+	resize();
 
-	const _img = document.createElement('img');
-	_img.src = 'assets/ship.png';
-	_img.style = 'position:absolute;left:50%;top:50%;margin:-90px 0 0 -90px;animation:fly 2s ease infinite';
-	document.body.appendChild(_img);
+	if (mobile) {
+		// mobile events
+		mainDiv.ontouchstart = touchStartHandler;
+	} else {
+		// desktop events
+		mainDiv.onmousedown = touchStartHandler;
+	}
 
-	const _btn = document.createElement('button');
-	_btn.innerHTML = 'Toggle Fullscreen';
-	_btn.style = 'position:absolute;left:50%;width:150px;height:30px;margin:0 0 0 -75px;';
-	document.body.appendChild(_btn);
-	
-	_btn.addEventListener('click', (e) => {
-		toggleFullscreen();
-	});
+	gameDiv.style = menuDiv.style = 'width:1080px;height:1920px';
 
-	const _play = document.createElement('button');
-	_play.innerHTML = 'PLAY!';
-	_play.style = 'position:absolute;left:50%;width:100px;height:50px;margin:0 0 0 -50px;bottom:100px';
-	document.body.appendChild(_play);
+	displayLoading();
+	interval = setInterval(displayLoading, 90);
 
-	_play.addEventListener('click', (e) => {
-		_play.style.display = 'none';
-		_div.style.display = 'none';
-		_btn.style.display = 'none';
-		playButtonClick();
+	// wait for the emoji font to load
+	document.fonts.ready.then(() => {
+		createUI();
+		startGame();
 	});
 }
 
-function toggleFullscreen() {
-	if (!document.fullscreenElement) {
-		document.documentElement.requestFullscreen();
-	} else if (document.exitFullscreen) {
-		document.exitFullscreen();
+function generateUIButton(code, handler, style) {
+	const button = document.createElement('div');
+	button.addEventListener("click", handler, false);
+	button.innerHTML = getEmojiCode(code);
+	button.className = "button";
+	button.style = style;
+	menuDiv.appendChild(button);
+}
+
+function initSound() {
+	if (!audioContext) {
+		SoundFXstart();
 	}
 }
 
-function playButtonClick() {
-	
-	// Generate the sky starfield
-	const cssSky = window.document.styleSheets[0];
-	cssSky.insertRule(
-		`@keyframes scroll {0% { top: -100%; } 25% { top: -50%; } 50% { top: 0; } 75% { top: 50%; } 100% { top: 100%; }}`,
-		cssSky.cssRules.length
-	);
-	createStarField();
-	
-	// Start spaceship animation
-	const cssShip = window.document.styleSheets[0];
-	cssShip.insertRule(
-		`@keyframes fly {0% {margin-top: -90px;} 50% { margin-top: -110px; } 100% { margin-top: -90px; }}`,
-		cssShip.cssRules.length
-	);
+function toggleSound(event) {
+	if (event) {
+		initSound();
+		if (SoundFXvolume == 1) {
+			SoundFXvolume = 0;
+		} else {
+			SoundFXvolume += SoundFXvolume || 0.25;
+			SoundFXmute();
+		}
+	}
+
+	if (!SoundFXvolume) {
+		//soundButton.innerHTML = "&nbsp&#215&#10919";
+	} else {
+		//soundButton.innerHTML = (SoundFXvolume == 1 ? "&#8901&#8901&#8901" : SoundFXvolume > 0.25 ? "&nbsp&#8901&#8901" : "&nbsp&nbsp&#8901") + "&#10919";
+	}
 }
 
-function createStarField() {
-	const width = window.innerWidth;
-	const height = window.innerHeight;
-	let x, y;
-
-	const stars1 = document.createElement('div');
-	stars1.style = `position:absolute;width:${width}px;height:${height}px;top:-${height}px;overflow:unset;animation:scroll 4s linear infinite`;
-	document.body.insertBefore(stars1, document.body.firstChild);
-
-	const stars2 = document.createElement('div');
-	stars2.style = `position:absolute;width:${width}px;height:${height}px;top:-${height}px;overflow:unset;animation:scroll 4s linear 2s infinite`;
-	document.body.insertBefore(stars2, document.body.firstChild);
-
-	setTimeout(i => {
-		stars1.innerHTML = `<svg fill="#5ae" viewBox="0 0 ${width} ${height}"></svg>`;
-		stars2.innerHTML = `<svg fill="#5ae" viewBox="0 0 ${width} ${height}"></svg>`;
-		for (i = 99; i--;) {
-			x = Math.random()*width;
-			y = Math.random()*height;
-			stars1.children[0].innerHTML += `<text x=${x} y=${y}>■</text>`;
-			stars2.children[0].innerHTML += `<text x=${x} y=${y}>■</text>`;
+// toggle fullscreen mode
+function toggleFullscreen(e) {
+	setTimeout(() => {
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen();
+		} else if (document.exitFullscreen) {
+			document.exitFullscreen();
 		}
-	}, 1);
+	}, 99);
+}
+
+function createUI() {
+	menuDiv.innerHTML = "";
+	clearInterval(interval);
+	generateUIButton(0, toggleFullscreen, "float:right");
+	generateUIButton(1, toggleSound, "float:right");
+	state = 0;
+}
+
+function resize(e) {
+	width = window.innerWidth;
+	height = window.innerHeight;
+	canvasScale = getScale();
+	mainDiv.style.transform = `scale(${canvasScale})`;
+	mainDiv.style.width = hardWidth + 'px';
+	mainDiv.style.height = hardHeight + 'px';
+	mainDiv.style.top = `${(height - hardHeight) / 2}px`;
+	mainDiv.style.left = `${(width - hardWidth) / 2}px`;
+	//e = gameCanvas.getBoundingClientRect();
+	//offsetX = e.left;
+	//offsetY = e.top;
+}
+
+function getScale(h, w){
+	h = (height / hardHeight);
+	w = (width / hardWidth)
+	return h < w ? h : w;
 }

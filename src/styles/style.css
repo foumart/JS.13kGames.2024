@@ -5,13 +5,42 @@
 }
 
 body {
-	background-color: #012;
-	color: #fff;
+	background-color: #000;
 }
 
 div, canvas {
+	position: absolute;
 	user-select: none;
-	touch-action: none;
 	-webkit-tap-highlight-color: transparent;
-	box-sizing: border-box;
+}
+
+canvas {
+	pointer-events: none;
+}
+
+#gameDiv {
+	font-family: emoji, Arial;
+	font-size: 64px;
+}
+
+#mainDiv {
+	background-color: #ccc;
+}
+
+#menuDiv {
+	text-align: center;
+}
+
+.button {
+	position: relative;
+	font-family: emoji, Arial;
+	font-size: 64px;
+	width: 75px;
+	margin: 10px;
+}
+
+@font-face {
+	font-family: emoji;
+	src: url(Twemoji.ttf);
+	/* src: url(https://www.foumartgames.com/dev/js13kGames/resources/Twemoji.ttf); */
 }

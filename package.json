@@ -1,8 +1,8 @@
 {
-	"name": "js13k_template",
+	"name": "js13k_2024",
 	"version": "0.0.1",
 	"title": "JS13K Template",
-	"description": "js13k progressive web app starter pack",
+	"description": "js13k 2024 entry",
 	"keywords": [
 		"js13kgames",
 		"js13k",
@@ -43,7 +43,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/foumart/JS.13kGames.git"
+		"url": "git+https://github.com/foumart/JS.13kGames.2024.git"
 	},
 	"author": {
 		"name": "Noncho Savov",

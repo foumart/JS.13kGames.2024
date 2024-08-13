@@ -17,7 +17,7 @@ var normalize = v => scale(v, 1 / (length(v) || 1));
 var distance = (v,w) => length(substract(v,w));
 
 // Gravity
-var mGravity = Vec2(0, 500);
+var mGravity = Vec2(0, 200);
 
 // All shapes
 var objects = [];
@@ -36,7 +36,7 @@ var setInfo = (collision, D, N, S) => {
 };
 
 // New shape
-var RigidShape = (C, mass, F, R, T, B, W, H, shape) => {
+var RigidShape = (C, mass, F, R, T, B, W, H, shape, checkBounce) => {
   shape = {
     T, // 0 circle / 1 rectangle
     C, // center
@@ -60,7 +60,8 @@ var RigidShape = (C, mass, F, R, T, B, W, H, shape) => {
       Vec2(C.x + W / 2, C.y - H / 2),
       Vec2(C.x + W / 2, C.y + H / 2),
       Vec2(C.x - W / 2, C.y + H / 2)
-    ]
+    ],
+    O: checkBounce
   };
   
   // Prepare rectangle
@@ -419,12 +420,12 @@ setInterval(
     gameCanvas.width ^= 0;
   
     // Compute collisions
-    for(k = 9; k--;){
+    //for(k = 9; k--;){
       for(i = objects.length; i--;){
         for(j = objects.length; j-- > i;){
           
           // Test bounds
-          if(boundTest(objects[i], objects[j])){
+          if(boundTest(objects[i], objects[j]) && i != j){
             
             // Test collision
             if(testCollision(objects[i], objects[j], collisionInfo)){
@@ -438,6 +439,11 @@ setInterval(
                   E: collisionInfo.S
                 };
               }
+
+              // Send event
+              if (objects[i].O && objects[i].R && objects[j].O == 1) objects[i].O(objects[j]);
+              if (objects[j].O && objects[j].R && objects[i].O == 1) objects[j].O(objects[i]);
+              //if (s2.O && s2.R) s2.O(objects[i]);
               
               // Resolve collision
               resolveCollision(objects[i], objects[j], collisionInfo);
@@ -445,7 +451,7 @@ setInterval(
           }
         }
       }
-    }
+    //}
   
     // Draw / Update scene
     for(i = objects.length; i--;){
@@ -480,11 +486,11 @@ setInterval(
       rotateShape(objects[i], objects[i].v * 1/60);
     }
   },
-  16
+  8
 );
 
 // New circle
-var Circle = (center, radius, mass, friction, restitution) => RigidShape(center, mass, friction, restitution, 0, radius);
+var Circle = (center, radius, mass, friction, restitution, checkBounce) => RigidShape(center, mass, friction, restitution, 0, radius, null, null, null, checkBounce);
 
 // New rectangle
-var Rectangle = (center, width, height, mass, friction, restitution) => RigidShape(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height);
+var Rectangle = (center, width, height, mass, friction, restitution, checkBounce) => RigidShape(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height, null, checkBounce);

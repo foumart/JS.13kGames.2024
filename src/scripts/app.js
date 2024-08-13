@@ -24,7 +24,7 @@ function displayLoading() {
 }
 
 // resource characters data (&#x1F{xxx};)
-const resources = ['533', '50a'];
+const resources = ['533', '50a', '5d1', '5c4'];
 
 function getEmojiCode(code) {
 	return `</b>&#x1F${resources[code]};<b>`;
@@ -37,9 +37,11 @@ function init() {
 	if (mobile) {
 		// mobile events
 		mainDiv.ontouchstart = touchStartHandler;
+		mainDiv.ontouchend = touchEndHandler;
 	} else {
 		// desktop events
 		mainDiv.onmousedown = touchStartHandler;
+		mainDiv.onmouseup = touchEndHandler;
 	}
 
 	gameDiv.style = menuDiv.style = 'width:1080px;height:1920px';
@@ -56,7 +58,7 @@ function init() {
 
 function generateUIButton(code, handler, style) {
 	const button = document.createElement('div');
-	button.addEventListener("click", handler, false);
+	button.addEventListener("mousedown", handler, false);
 	button.innerHTML = getEmojiCode(code);
 	button.className = "button";
 	button.style = style;
@@ -101,8 +103,10 @@ function toggleFullscreen(e) {
 function createUI() {
 	menuDiv.innerHTML = "";
 	clearInterval(interval);
+	generateUIButton(2, chargeHandler, "position:fixed;left:980px");
+	generateUIButton(3, chargeHandler, "position:fixed;left:982px;top:1740px;transform:scale(3,4.5)");
 	generateUIButton(0, toggleFullscreen, "float:right");
-	generateUIButton(1, toggleSound, "float:right");
+	generateUIButton(1, toggleSound, "float:left");
 	state = 0;
 }
 

@@ -254,7 +254,7 @@ function archive(callback) {
 	else {
 		(async () => {
 			zip = (await import('gulp-zip')).default;
-			src([dir + '/*', dir + '/*/*', '!'+ dir + '/*.ttf'], { allowEmpty: true })
+			src([dir + '/*', dir + '/*/*', '!'+ dir + '/*.ttf', '!'+ dir + '/assets/*.ttf'], { allowEmpty: true })
 				.pipe(zip(test ? 'game.zip' : 'game_' + timestamp + '.zip'))
 				.pipe(advzip({ optimizationLevel: 4, iterations: 10 }))
 				.pipe(dest('zip/'))

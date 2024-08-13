@@ -36,11 +36,11 @@ canvas {
 	font-family: emoji, Arial;
 	font-size: 64px;
 	width: 75px;
-	margin: 10px;
+	margin: 12spx;
 }
 
 @font-face {
 	font-family: emoji;
-	src: url(Twemoji.ttf);
+	src: url(./assets/Twemoji.ttf);
 	/* src: url(https://www.foumartgames.com/dev/js13kGames/resources/Twemoji.ttf); */
 }

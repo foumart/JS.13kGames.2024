@@ -32,7 +32,7 @@ class TweenFX {
 						element[key] = tweenedStart[i] - (tweenedStart[i] - tweenedEnd[i]) / duration * eased;
 					}
 				});
-				_update();
+				if (_update != null) _update();
 				requestAnimationFrame(tween);
 			} else if (_callback != null) {
 				_callback();
@@ -47,7 +47,7 @@ class TweenFX {
 		}
 
 		element.killed = false;
-		_update();
+		if (_update != null) _update();
 		requestAnimationFrame(tween);
 	}
 }

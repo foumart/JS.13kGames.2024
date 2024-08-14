@@ -61,7 +61,7 @@ var RigidShape = (C, mass, F, R, T, B, W, H, shape, checkBounce) => {
       Vec2(C.x + W / 2, C.y + H / 2),
       Vec2(C.x - W / 2, C.y + H / 2)
     ],
-    O: checkBounce
+    O: checkBounce, // method to call on collision with another object that have checkBounce (O) set
   };
   
   // Prepare rectangle
@@ -185,29 +185,10 @@ var testCollision = (c1, c2, info) => {
     dist = length(vFrom1to2);
     
     if(dist <= Math.sqrt(rSum * rSum)){
-    
-    //if(dist){
-      
-      // overlapping but not same position
       var
-      normalFrom2to1 = normalize(scale(vFrom1to2, -1)),
-      radiusC2 = scale(normalFrom2to1, c2.B);
+        normalFrom2to1 = normalize(scale(vFrom1to2, -1)),
+        radiusC2 = scale(normalFrom2to1, c2.B);
       setInfo(collisionInfo, rSum - dist, normalize(vFrom1to2), add(c2.C, radiusC2));
-    //}
-    
-    /*
-    // same position
-    else {
-      
-      if(c1.B > c2.B){
-        setInfo(collisionInfo, rSum, Vec2(0, -1), add(c1.C, Vec2(0, c1.B)));
-      }
-      
-      else {
-        setInfo(collisionInfo, rSum, Vec2(0, -1), add(c2.C, Vec2(0, c2.B)));
-      }
-    }
-    */
     }
     
     return 1;
@@ -440,10 +421,9 @@ setInterval(
                 };
               }
 
-              // Send event
+              // Send bounce event
               if (objects[i].O && objects[i].R && objects[j].O == 1) objects[i].O(objects[j]);
               if (objects[j].O && objects[j].R && objects[i].O == 1) objects[j].O(objects[i]);
-              //if (s2.O && s2.R) s2.O(objects[i]);
               
               // Resolve collision
               resolveCollision(objects[i], objects[j], collisionInfo);

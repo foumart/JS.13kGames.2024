@@ -24,7 +24,7 @@ function displayLoading() {
 }
 
 // resource characters data (&#x1F{xxx};)
-const resources = ['533', '50a', '5d1', '5c4'];
+const resources = ['533', '50a', '5d1', '5c4', '5b2'];
 
 function getEmojiCode(code) {
 	return `</b>&#x1F${resources[code]};<b>`;
@@ -58,7 +58,7 @@ function init() {
 
 function generateUIButton(code, handler, style) {
 	const button = document.createElement('div');
-	button.addEventListener("mousedown", handler, false);
+	button.addEventListener("mousedown", handler.bind(this));
 	button.innerHTML = getEmojiCode(code);
 	button.className = "button";
 	button.style = style;
@@ -105,6 +105,8 @@ function createUI() {
 	clearInterval(interval);
 	generateUIButton(2, chargeHandler, "position:fixed;left:980px");
 	generateUIButton(3, chargeHandler, "position:fixed;left:982px;top:1740px;transform:scale(3,4.5)");
+	generateUIButton(4, leftSwapperHandler, "position:fixed;left:170px;top:1650px;transform:scale(2)");
+	generateUIButton(4, rightSwapperHandler, "position:fixed;left:730px;top:1650px;transform:scale(2)");
 	generateUIButton(0, toggleFullscreen, "float:right");
 	generateUIButton(1, toggleSound, "float:left");
 	state = 0;

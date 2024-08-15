@@ -6,6 +6,7 @@ const gameContext = gameCanvas.getContext("2d");
 
 const mobile = navigator.userAgent.search('Mobile') > 0;
 let state = 0;
+const frameLength = 8;
 
 // global sizes
 const hardWidth = 1080;
@@ -24,7 +25,7 @@ function displayLoading() {
 }
 
 // resource characters data (&#x1F{xxx};)
-const resources = ['533', '50a', '5d1', '5c4', '5b2'];
+const resources = ['533', '50a', '5d1', '39b', '5b2'];
 
 function getEmojiCode(code) {
 	return `</b>&#x1F${resources[code]};<b>`;
@@ -44,6 +45,9 @@ function init() {
 		mainDiv.onmouseup = touchEndHandler;
 	}
 
+	document.addEventListener("keydown", onKeyDown);
+	document.addEventListener("keyup", onKeyUp);
+
 	gameDiv.style = menuDiv.style = 'width:1080px;height:1920px';
 
 	displayLoading();
@@ -53,16 +57,54 @@ function init() {
 	document.fonts.ready.then(() => {
 		createUI();
 		startGame();
+		runPhysics();
 	});
 }
 
-function generateUIButton(code, handler, style) {
-	const button = document.createElement('div');
-	button.addEventListener("mousedown", handler.bind(this));
-	button.innerHTML = getEmojiCode(code);
-	button.className = "button";
-	button.style = style;
-	menuDiv.appendChild(button);
+const keysHeld = [];
+function onKeyDown(event) {//console.log(event.keyCode)
+	if (event.keyCode == 37 && keysHeld.indexOf(37) == -1) {
+		keysHeld.push(37);
+		leftFlipperHandler();
+	} else if (event.keyCode == 39 && keysHeld.indexOf(39) == -1) {
+		keysHeld.push(39);
+		rightFlipperHandler();
+	} else if (event.keyCode == 32 && keysHeld.indexOf(32) == -1) {
+		keysHeld.push(32);
+		chargerHandler();
+	} else if (event.keyCode == 82) {
+		for (let i = 0; i < balls.length; i++) {
+			let ball = balls[i];
+			if (ball.C.y > 1850 || ball.C.y < 0 || ball.C.x > 1060 || ball.C.x < 0) {
+				ball.C.x = ballLaunchX;
+				ball.C.y = ballLaunchY;
+				ball.G = 0;
+				ball.V.x = 0;
+				ball.V.y = 0;
+				ball.v = 0;
+				break;
+			}
+		}
+	} else if (event.keyCode == 13) {
+		debugger
+	}
+}
+
+function onKeyUp(event) {
+	if (event.keyCode == 37 && keysHeld.indexOf(37) > -1) {
+		keysHeld.splice(keysHeld.indexOf(37), 1);
+		flipperL.checkInteractionEnd();
+	} else if (event.keyCode == 39 && keysHeld.indexOf(39) > -1) {
+		keysHeld.splice(keysHeld.indexOf(39), 1);
+		flipperR.checkInteractionEnd();
+	} else if (event.keyCode == 32 && keysHeld.indexOf(32) > -1) {
+		keysHeld.splice(keysHeld.indexOf(32), 1);
+		if (launcher.charge && !launcher.ballLaunched) {
+			launcher.checkLauncherInteractionEnd();
+		}
+	} else {
+		touchEndHandler();
+	}
 }
 
 function initSound() {
@@ -103,13 +145,23 @@ function toggleFullscreen(e) {
 function createUI() {
 	menuDiv.innerHTML = "";
 	clearInterval(interval);
-	generateUIButton(2, chargeHandler, "position:fixed;left:980px");
-	generateUIButton(3, chargeHandler, "position:fixed;left:982px;top:1740px;transform:scale(3,4.5)");
-	generateUIButton(4, leftSwapperHandler, "position:fixed;left:170px;top:1650px;transform:scale(2)");
-	generateUIButton(4, rightSwapperHandler, "position:fixed;left:730px;top:1650px;transform:scale(2)");
+	generateUIButton(2, chargerHandler, "position:fixed;left:980px");
+	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1640px;transform:scale(0.9,1)");
+	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1700px;transform:scale(0.9,1)");
+	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1760px;transform:scale(0.9,1)");
+	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1820px;transform:scale(0.9,1)");
 	generateUIButton(0, toggleFullscreen, "float:right");
 	generateUIButton(1, toggleSound, "float:left");
 	state = 0;
+}
+
+function generateUIButton(code, handler, style) {
+	const button = document.createElement('div');
+	button.addEventListener("mousedown", handler.bind(this));
+	button.innerHTML = getEmojiCode(code);
+	button.className = "button";
+	button.style = style;
+	menuDiv.appendChild(button);
 }
 
 function resize(e) {

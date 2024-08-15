@@ -1,17 +1,41 @@
-let ballLaunched = 0;
-let ball;
-let bouncing;
+let balls = [];
+
+const ballLaunchX = 1030;
+const ballLaunchY = 990;
+const ballSpeedLimit = 3000;
+const bottomY = 1100;
+
+let launcher;
+
+let flipperL;
+let flipperR;
 
 let bottom;
 
+let kickerL;
+let kickerR;
+
 let bumper1;
+let bumper2;
+let bumper3;
+let bumper4;
+let bumper5;
 
 const defaultRestitution = .5;
 
 function startGame() {
-	console.log("startGame");
 
-	bottom = Rectangle(Vec2(540, 1945), 1080, 90, 0, 1, defaultRestitution);
+	// launcher
+	launcher = new Launcher(2);
+
+	// flippers
+	flipperL = new Flipper(300, bottomY+673, 280, 50, -2.55);
+	flipperR = new Flipper(700, bottomY+673, 280, 50, 2.55);
+	
+
+	//            center,      radius, mass, friction, restitution
+	//balls.push(Circle(Vec2(530, 190), 30, 10, 1, 0, checkBounce));
+
 	// top
 	Rectangle(Vec2(540, -80), 1080, 200, 0, 1, defaultRestitution);
 
@@ -20,9 +44,11 @@ function startGame() {
 	const cornersR = [3.05,2.85,2.65,2.5,2.35,2.2,2.05,1.9,1.75,1.65];
 
 	for (let i = 0; i < 10; i++) {
-		rotateShape(Rectangle(Vec2(cornersX[i], cornersY[i]), 50, 90, 0, 1, defaultRestitution), -cornersR[i]);
-		rotateShape(Rectangle(Vec2(1080 - cornersX[i], cornersY[i]), 50, 90, 0, 1, defaultRestitution), cornersR[i]);
+		rotateShape(Rectangle(Vec2(cornersX[i], cornersY[i]), 250, 99, 0, 1, defaultRestitution), -cornersR[i]);
+		rotateShape(Rectangle(Vec2(1080 - cornersX[i], cornersY[i]), 250, 99, 0, 1, defaultRestitution), cornersR[i]);
 	}
+
+	bottom = Rectangle(Vec2(540, 1945), 1080, 90, 0, 1, defaultRestitution);
 
 	/*rotateShape(Rectangle(Vec2(810, 12), 50, 20, 0, 1, defaultRestitution), -3.05);
 	rotateShape(Rectangle(Vec2(856, 20), 50, 20, 0, 1, defaultRestitution), -2.85);
@@ -35,99 +61,143 @@ function startGame() {
 	rotateShape(Rectangle(Vec2(1061, 263), 50, 20, 0, 1, defaultRestitution), -1.75);
 	rotateShape(Rectangle(Vec2(1068, 310), 50, 20, 0, 1, defaultRestitution), -1.65);*/
 
-	Rectangle(Vec2(-80, 980), 200, 1980, 0, 1, defaultRestitution);
-	Rectangle(Vec2(1160, 980), 200, 1980, 0, 1, defaultRestitution);
-	Rectangle(Vec2(990, 1405), 20, 990, 0, 1, defaultRestitution);
+	Rectangle(Vec2(-80, 980), 200, 1980, 0, 1, defaultRestitution);// |
+	Rectangle(Vec2(1160, 980), 200, 1980, 0, 1, defaultRestitution);// |
+	Rectangle(Vec2(990, 1405), 20, 990, 0, 1, defaultRestitution);// |
 
-	rotateShape(Rectangle(Vec2(200, 1580), 225, 20, 0, 1, defaultRestitution), -2.6);
-	rotateShape(Rectangle(Vec2(800, 1580), 225, 20, 0, 1, defaultRestitution), 2.6);
-//tmp
-	rotateShape(Rectangle(Vec2(100, 1500), 225, 20, 0, 1, defaultRestitution), -2.6);
-	rotateShape(Rectangle(Vec2(900, 1500), 225, 20, 0, 1, defaultRestitution), 2.6);
-	rotateShape(Rectangle(Vec2(480, 1700), 50, 20, 0, 1, defaultRestitution), -0.5);
-	rotateShape(Rectangle(Vec2(520, 1700), 50, 20, 0, 1, defaultRestitution), 0.5);
+	bumper1 = new Bumper(350, 360, 90, 9);
+	bumper2 = new Bumper(690, 360, 90, 9);
+	bumper3 = new Bumper(520, 580, 60, 16);
 
-	bumper1 = Circle(Vec2(550, 390), 90, 0, 10, 200, checkBounce);
+	bumper4 = new Bumper(425, 150, 30, 6);
+	bumper5 = new Bumper(555, 150, 30, 6);
 
-	launcher = Rectangle(Vec2(1030, 1650), 60, 500, 0, 1, 0, 1);
-	normalizeCharger();
+	// bottom part
+	Rectangle(Vec2(90, bottomY+282), 20, 200, 0, 1, defaultRestitution); // |
+	Rectangle(Vec2(908, bottomY+345), 20, 400, 0, 1, defaultRestitution); // |
+	rotateShape(Rectangle(Vec2(180, bottomY+575), 220, 35, 0, 1, defaultRestitution), -2.5); // /
+	rotateShape(Rectangle(Vec2(820, bottomY+575), 220, 35, 0, 1, defaultRestitution), 2.5);
+	rotateShape(Rectangle(Vec2(285, bottomY+647), 35, 35, 0, 1, defaultRestitution), -2.8);
+	rotateShape(Rectangle(Vec2(302, bottomY+650), 20, 20, 0, 1, defaultRestitution), -2); // \
+	rotateShape(Rectangle(Vec2(715, bottomY+647), 35, 35, 0, 1, defaultRestitution), 2.8);
+	rotateShape(Rectangle(Vec2(698, bottomY+650), 20, 20, 0, 1, defaultRestitution), 2);
+//tmp stoppers
+	rotateShape(Rectangle(Vec2(100, bottomY+500), 225, 20, 0, 1, defaultRestitution), -2.4);
+	rotateShape(Rectangle(Vec2(940, bottomY+100), 75, 20, 0, 1, defaultRestitution), 2.4);
+	//rotateShape(Rectangle(Vec2(480, 1730), 50, 20, 0, 1, defaultRestitution), -0.5);
+	//rotateShape(Rectangle(Vec2(520, 1730), 50, 20, 0, 1, defaultRestitution), 0.5);
 
-	//                          center, width, height, mass, friction, restitution
-	swapperL = Rectangle(Vec2(300, 1650), 300, 20, 0, 100, defaultRestitution, 1);
-	rotateShape(swapperL, -2.6);
-	//swapperL.W = 125;
 
-	swapperR = Rectangle(Vec2(700, 1650), 300, 20, 0, 100, defaultRestitution, 1);
-	rotateShape(swapperR, 2.6);
-	//swapperR.W = 125;
+	// left kicker body
+	Circle(Vec2(184, bottomY+324), 18, 0, 0, defaultRestitution);
+	Circle(Vec2(280, bottomY+532), 18, 0, 0, defaultRestitution);
+	Circle(Vec2(206, bottomY+446), 30, 0, 0, defaultRestitution);
+	rotateShape(Rectangle(Vec2(182, bottomY+382), 20, 120, 0, 1, defaultRestitution), -0.1);
+	rotateShape(Rectangle(Vec2(234, bottomY+500), 20, 120, 0, 1, defaultRestitution), 2.3)
+	// left kicker bouncer
+	kickerL = Rectangle(Vec2(236, bottomY+425), 200, 20, 0, 1, 1, 2);
+	rotateShape(kickerL, -2);
 
-	//            center,      radius, mass, friction, restitution
-	ball = Circle(Vec2(1030, 990), 30, 10, 1, 0, checkBounce);
-
-	/*let r = Rectangle(Vec2(500, 200), 400, 20, 0, 1, .5);
-	rotateShape(r, 2.8);
-	Rectangle(Vec2(200, 400), 400, 20, 0, 1, .5);
-	Rectangle(Vec2(100, 200), 200, 20, 0, 1, .5);
-	Rectangle(Vec2(10, 360), 20, 100, 0, 1, .5);
-
-	for(var i = 0; i < 30; i++){
-		r = Circle(Vec2(Math.random() * 800, Math.random() * 450 / 2), Math.random() * 20 + 10, Math.random() * 30, Math.random() / 2, Math.random() / 2);
-		rotateShape(r, Math.random() * 7);
-		r = Rectangle(Vec2(Math.random() * 800, Math.random() * 450 / 2), Math.random() * 20 + 10, Math.random() * 20 + 10, Math.random() * 30, Math.random() / 2, Math.random() / 2);
-		rotateShape(r, Math.random() * 7);
-	}*/
+	// right kicker body
+	Circle(Vec2(816, bottomY+324), 18, 0, 0, defaultRestitution);
+	Circle(Vec2(720, bottomY+532), 18, 0, 0, defaultRestitution);
+	Circle(Vec2(794, bottomY+446), 30, 0, 0, defaultRestitution);
+	rotateShape(Rectangle(Vec2(818, bottomY+382), 20, 120, 0, 1, defaultRestitution), 0.1);
+	rotateShape(Rectangle(Vec2(766, bottomY+500), 20, 120, 0, 1, defaultRestitution), -2.3)
+	// right kicker bouncer
+	kickerR = Rectangle(Vec2(764, bottomY+425), 200, 20, 0, 1, 1, 2);
+	rotateShape(kickerR, 2);
 }
 
-function checkBounce(obj) {
-	if (obj == launcher) {
-		if (ballLaunched) {
-			ballLaunched = false;
+function limitBallSpeed(ball) {if (ball.V.y > 100) console.log(">",ball.V.y)
+	if (ball.V.y > ballSpeedLimit) {
+		ball.V.y = ballSpeedLimit;
+	} else if (ball.V.y < -ballSpeedLimit) {
+		ball.V.y = -ballSpeedLimit;
+	}
+
+	if (ball.V.x > ballSpeedLimit) {
+		ball.V.x = ballSpeedLimit;
+	} else if (ball.V.x < -ballSpeedLimit) {
+		ball.V.x = -ballSpeedLimit;
+	}
+}
+
+function checkBounce(obj, ball) {//console.log("B")
+	if (obj == flipperL.body || obj == flipperL.tip) {
+		if (ball.V.y>100) console.log("<",ball.V.y, flipperL.body.R)
+		
+		if (flipperL.body.R > defaultRestitution) {
+			if (ball.V.y > 0) {
+				ball.V.y *= -flipperL.body.R * 2;console.log("=", ball.V.y)
+			} else {
+				ball.V.y *= flipperL.body.R;console.log("==", ball.V.y)
+			}
+			
+		}
+	} else if (obj == flipperR.body || obj == flipperR.tip) {
+		if (ball.V.y>100) console.log("<",ball.V.y, flipperR.body.R)
+		
+		if (flipperR.body.R > defaultRestitution) {
+			if (ball.V.y > 0) {
+				ball.V.y *= -flipperR.body.R * 2;console.log("=", ball.V.y)
+			} else {
+				ball.V.y *= flipperR.body.R;console.log("==", ball.V.y)
+			}
+		}
+	} else if (obj == launcher.body) {
+		if (launcher.ballLaunched) {
+			launcher.ballLaunched = false;
+			launcher.addBlocker();
 			ball.R = 0;
+		} else if (launcher.charge) {
+			launcher.launchBall();
 		}
-	} else if (obj == swapperL) {//console.log(swapperL.R, ball.v);
-		if (swapperL.R != defaultRestitution) {
-			ball.V.y -= Math.pow(swapperL.R, 6);
-			console.log(swapperL.R, ball.V.y);
-			ball.R = swapperL.R;
-		}
-		//ball.v += swapperL.R * 10;
-		/*if (bouncing && swapperL.R != defaultRestitution) {
-			ball.V.y *= swapperL.R * 2;
-			bouncing = false;
-		} else {
-			bouncing = true;
-			ball.R = swapperL.R;
-		}*/
-	} else if (obj == swapperR) {
-		if (swapperR.R != defaultRestitution) {
-			ball.V.y -= Math.pow(swapperR.R, 6);
-			console.log(swapperR.R, ball.V.y);
-			ball.R = swapperL.R;
-		}
-
-		//ball.v += swapperR.R * 10;
-		/*if (bouncing && swapperR.R != defaultRestitution) {
-			ball.V.y *= swapperR.R * 2;
-			bouncing = false;
-		} else {
-			bouncing = true;
-			ball.R = swapperR.R;
-		}*/
+	} else if (obj == kickerL) {console.log("kickerL");
+		ball.V.y /= 2;
+		ball.V.y -= 600 + ball.V.y / 2;
+		ball.V.x /= 3;
+		ball.V.x += 1600;// - (ball.V.x > 0 ? ball.V.x / 2 : -ball.V.x / 2);
+	} else if (obj == kickerR) {console.log("kickerR");
+		ball.V.y /= 2;
+		ball.V.y -= 600 + ball.V.y / 2;
+		ball.V.x /= 3;
+		ball.V.x -= 1600;// - (ball.V.x > 0 ? -ball.V.x / 2 : ball.V.x / 2);
+	} else if (obj == bumper1.body || obj == bumper2.body || obj == bumper3.body || obj == bumper4.body || obj == bumper5.body) {
+		console.log("bumperO");
+		ball.G = 0;
+		ball.v = 0;
+		ball.V.x = (ball.C.x - obj.C.x) * obj.parent.strength;
+		ball.V.y = (ball.C.y - obj.C.y) * obj.parent.strength;
 	}
-	//console.log("checkBounce", obj, );
+
+	limitBallSpeed(ball);
 }
 
-function touchEndHandler(event) {//console.log(event);
+function chargerHandler() {
+	launcher.chargeHandler();
+}
+
+function leftFlipperHandler() {
+	flipperL.flipperHandler();
+}
+
+function rightFlipperHandler() {
+	flipperR.flipperHandler();
+}
+
+function touchEndHandler(event) {//console.log(event.target);
 	// release launcher
-	if (charge && !ballLaunched) {
-		checkLauncherInteractionEnd();
+	if (launcher.charge && !launcher.ballLaunched) {
+		launcher.checkLauncherInteractionEnd();
 	}
-	// release swappers
+	// release flippers
 	else {
-		checkSwappersInteractionEnd();
+		flipperL.checkInteractionEnd();
+		flipperR.checkInteractionEnd();
 	}
 
-	if (ball.C.y > 1850) {
+	/*if (ball.C.y > 1850) {
 		bottom.R = 30;
 		ball.R = 30;
 		moveShape(bottom, Vec2(0, 2));
@@ -141,27 +211,9 @@ function touchEndHandler(event) {//console.log(event);
 				moveShape(ball, Vec2(0, 2));
 			}
 		);
-	}
+	}*/
 }
 
 function touchStartHandler(event) {//console.log(event.target);
-	if (event.target == menuDiv.firstChild || event.target == menuDiv.children[1]) return;
-
-	/*let objR = {rotation: swapperR.G};
-	TweenFX.to(objR, 6, {rotation: 4}, 2,
-		() => {
-			swapperR.R = 2;
-			rotateShape(swapperR, objR.rotation - swapperR.G);
-		},
-		() => {
-			TweenFX.to(objR, 10, {rotation: 2.6}, 1,
-				() => {
-					rotateShape(swapperR, objR.rotation - swapperR.G);
-				},
-				() => {
-					swapperR.R = 0.7;
-				}
-			);
-		}
-	);*/
+	//if (event.target == menuDiv.firstChild || event.target == menuDiv.children[1]) return;
 }

@@ -33,7 +33,7 @@ class TweenFX {
 					}
 				});
 				if (_update != null) _update();
-				requestAnimationFrame(tween);
+				setTimeout(tween, frameLength);
 			} else if (_callback != null) {
 				_callback();
 			}
@@ -48,6 +48,6 @@ class TweenFX {
 
 		element.killed = false;
 		if (_update != null) _update();
-		requestAnimationFrame(tween);
+		setTimeout(tween, frameLength);
 	}
 }

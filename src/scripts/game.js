@@ -1,7 +1,7 @@
 let balls = [];
 
 const ballLaunchX = 1030;
-const ballLaunchY = 990;
+const ballLaunchY = 1369;
 const ballSpeedLimit = 3000;
 const bottomY = 1100;
 
@@ -186,34 +186,17 @@ function rightFlipperHandler() {
 	flipperR.flipperHandler();
 }
 
-function touchEndHandler(event) {//console.log(event.target);
-	// release launcher
-	if (launcher.charge && !launcher.ballLaunched) {
-		launcher.checkLauncherInteractionEnd();
+function resetBall() {
+	for (let i = 0; i < balls.length; i++) {
+		let ball = balls[i];
+		if (ball.C.y > 1850 || ball.C.y < 0 || ball.C.x > 1060 || ball.C.x < 0) {
+			ball.C.x = ballLaunchX;
+			ball.C.y = ballLaunchY;
+			ball.G = 0;
+			ball.V.x = 0;
+			ball.V.y = 0;
+			ball.v = 0;
+			break;
+		}
 	}
-	// release flippers
-	else {
-		flipperL.checkInteractionEnd();
-		flipperR.checkInteractionEnd();
-	}
-
-	/*if (ball.C.y > 1850) {
-		bottom.R = 30;
-		ball.R = 30;
-		moveShape(bottom, Vec2(0, 2));
-		moveShape(ball, Vec2(0, -2));
-		let dummy = {a: 0};
-		TweenFX.to(dummy, 5, {a: 1}, 2, null,
-			() => {
-				bottom.R = defaultRestitution;
-				ball.R = defaultRestitution;
-				moveShape(bottom, Vec2(0, -2));
-				moveShape(ball, Vec2(0, 2));
-			}
-		);
-	}*/
-}
-
-function touchStartHandler(event) {//console.log(event.target);
-	//if (event.target == menuDiv.firstChild || event.target == menuDiv.children[1]) return;
 }

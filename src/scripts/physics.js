@@ -1,5 +1,6 @@
-//a = gameCanvas;
-//c = gameContext;
+const frameLength = 8;
+//var frameCount = 0;
+//https://stackoverflow.com/questions/19764018/controlling-fps-with-requestanimationframe
 
 // MINI 2D PHYSICS
 // ===============
@@ -22,8 +23,13 @@ var mGravity = Vec2(0, 300);
 
 // All shapes
 var objects = [];
-var debug = true;
+var debug = false;//_debug;
 var debugFills = false;
+
+var step = 0;
+var startTime = Date.now();
+var frame = 0;
+var fps;
 
 // Collision info 
 var collisionInfo = {}; // final collision between two shapes
@@ -400,181 +406,201 @@ var resolveCollision = (s1, s2, collisionInfo) => {
 	s2.v += R2crossT * jT * s2.I;
 };
 
-function runPhysics() {
+var runPhysics = () => {
 	// Loop
-	setInterval(
-		(i,j,k) => {
-			
-			// Reset
-			gameCanvas.width ^= 0;
-		
-			// Compute collisions
-			//for(k = 9; k--;){
-				for(i = objects.length; i--;){
-					for(j = objects.length; j-- > i;){
-						
-						// Test bounds
-						if(boundTest(objects[i], objects[j]) && i != j){
-							
-							// Test collision
-							if(testCollision(objects[i], objects[j], collisionInfo)){
-								
-								// Make sure the normal is always from object[i] to object[j]
-								if(dot(collisionInfo.N, substract(objects[j].C, objects[i].C)) < 0){
-									collisionInfo = {
-										D: collisionInfo.D,
-										N: scale(collisionInfo.N, -1),
-										S: collisionInfo.E,
-										E: collisionInfo.S
-									};
-								}
-
-								// Send bounce event
-								if (objects[i].O && !(objects[i].O > 0) && objects[i].R && objects[j].O) {
-									objects[i].O(objects[j], objects[i]);
-								}
-								if (objects[j].O && !(objects[j].O > 0) && objects[j].R && objects[i].O) {
-									objects[j].O(objects[i], objects[j]);
-								}
-								
-								// Resolve collision
-								resolveCollision(objects[i], objects[j], collisionInfo);
-							}
-						}
-					}
-				}
-			//}
-		
-			// Draw / Update scene
-			for(i = objects.length; i--;){
-				
-				// Draw
-				// ----
-
-				// draw ball
-				/*if (objects[i] == launcher.chargingBall) {
-					drawUnit(1, gameContext, objects[i].C.x - 28, objects[i].C.y - 28, 2.6);
-				}*/
-				
-				gameContext.save();
-				gameContext.translate(objects[i].C.x, objects[i].C.y);
-				gameContext.rotate(objects[i].G);
-				gameContext.lineWidth = 2;
-				gameContext.strokeStyle = '#ffffff';
-				
-				// Circle
-				if (!objects[i].T) {
-					if (objects[i].O == 1) {
-						// flipper tip
-					} else
-					if (objects[i].O > 0) {
-						// bumpers
-						gameContext.beginPath();
-						gameContext.arc(0, 0, objects[i].B, 0, 7);
-						gameContext.closePath();
-						gameContext.fillStyle = '#999';
-						gameContext.fill();
-					} else
-					if (objects[i].O) {
-						// ball
-						gameContext.beginPath();
-						gameContext.arc(0, 0, objects[i].B, 0, 7);
-						gameContext.closePath();
-						
-						gameContext.fillStyle = '#fff';
-						gameContext.fill();
-						gameContext.strokeStyle = "#000";
-						gameContext.lineWidth = 2;
-						gameContext.stroke();
-					} else {
-						// walls
-						gameContext.beginPath();
-						gameContext.arc(0, 0, objects[i].B, 0, 7);
-						gameContext.closePath();
-						gameContext.fillStyle = '#666';
-						gameContext.fill();
-					}
-				}
-		
-				// Rectangle
-				else {
-					// draw flippers
-					if (objects[i].O == 1) {
-						gameContext.beginPath();
-						gameContext.arc(0, 0, 28, 1.6, 4.6, objects[i].G < 0);
-						gameContext.arc(objects[i].G > 0 ? 150 : -150, 12, 12, 4.6, 1.6, objects[i].G < 0);
-						gameContext.closePath();
-						
-						gameContext.fillStyle = '#bbb';
-						gameContext.fill();
-						gameContext.strokeStyle = "#fff";
-						gameContext.lineWidth = 6;
-						gameContext.stroke();
-					} else if (objects[i].O == 2) {
-						gameContext.fillStyle = '#bbb';
-						gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-					} else if (objects[i].O == 3) {
-						
-					} else {
-						gameContext.fillStyle = '#666';
-						gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-					}
-				}
-				
-				gameContext.restore();
-				
-				// Update position/rotation
-				objects[i].V = add(objects[i].V, scale(objects[i].A, 1/60));
-				moveShape(objects[i], scale(objects[i].V, 1/60));
-				objects[i].v += objects[i].a * 1/60;
-				rotateShape(objects[i], objects[i].v * 1/60);
-			}
-
-			// Debug display
-			if (debug) {
-				for(i = objects.length; i--;){
-					gameContext.save();
-					gameContext.translate(objects[i].C.x, objects[i].C.y);
-					gameContext.rotate(objects[i].G);
-					
-					// Circle
-					if (!objects[i].T) {
-						gameContext.beginPath();
-						gameContext.arc(0, 0, objects[i].B, 0, 7);
-						gameContext.lineTo(0, 0);
-						gameContext.closePath();
-						if (debugFills) {
-							if (objects[i].O >= 0) {
-								gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
-								gameContext.fill();
-							}
-						}
-						gameContext.lineWidth = 2;
-						gameContext.strokeStyle = "red";
-						gameContext.stroke();
-					}
-			
-					// Rectangle
-					else {
-						if (debugFills) {
-							if (objects[i].O >= 0) {
-								gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
-								gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-							}
-						}
-						gameContext.lineWidth = 2;
-						gameContext.strokeStyle = "red";
-						gameContext.strokeRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-					}
-					
-					gameContext.restore();
-				}
-			}
-		},
-
-		frameLength
-	);
+	setInterval( animate, frameLength );
+	//requestAnimationFrame( animate );
 }
+
+var animate = (i,j,k) => {
+
+	if (debug) {
+		if (!fps) {
+			fps = document.createElement('div');
+			menuDiv.appendChild(fps);
+			fps.style.fontFamily = "Arial";
+			fps.style.fontSize = "30px";
+			fps.style.pointerEvents = "none";
+		}
+		var time = Date.now();
+		frame++;
+		if (time - startTime > 1000) {
+			fps.innerHTML = (frame / ((time - startTime) / 1000)).toFixed(1);
+			startTime = time;
+			frame = 0;
+		}
+	}
+	
+	if (!state && step) return;
+
+	step ++;
+
+	// Reset
+	gameCanvas.width ^= 0;
+
+	// Compute collisions
+	//for(k = 9; k--;){
+		for(i = objects.length; i--;){
+			for(j = objects.length; j-- > i;){
+				
+				// Test bounds
+				if(boundTest(objects[i], objects[j]) && i != j){
+					
+					// Test collision
+					if(testCollision(objects[i], objects[j], collisionInfo)){
+						
+						// Make sure the normal is always from object[i] to object[j]
+						if(dot(collisionInfo.N, substract(objects[j].C, objects[i].C)) < 0){
+							collisionInfo = {
+								D: collisionInfo.D,
+								N: scale(collisionInfo.N, -1),
+								S: collisionInfo.E,
+								E: collisionInfo.S
+							};
+						}
+
+						// Send bounce event
+						if (objects[i].O && !(objects[i].O > 0) && objects[i].R && objects[j].O) {
+							objects[i].O(objects[j], objects[i]);
+						}
+						if (objects[j].O && !(objects[j].O > 0) && objects[j].R && objects[i].O) {
+							objects[j].O(objects[i], objects[j]);
+						}
+						
+						// Resolve collision
+						resolveCollision(objects[i], objects[j], collisionInfo);
+					}
+				}
+			}
+		}
+	//}
+
+	// Draw / Update scene
+	for(i = objects.length; i--;){
+		
+		// Draw
+		// ----
+
+		// draw ball
+		/*if (objects[i] == launcher.chargingBall) {
+			drawUnit(1, gameContext, objects[i].C.x - 28, objects[i].C.y - 28, 2.6);
+		}*/
+		
+		gameContext.save();
+		gameContext.translate(objects[i].C.x, objects[i].C.y);
+		gameContext.rotate(objects[i].G);
+		gameContext.lineWidth = 2;
+		gameContext.strokeStyle = '#ffffff';
+		
+		// Circle
+		if (!objects[i].T) {
+			if (objects[i].O == 1) {
+				// flipper tip
+			} else
+			if (objects[i].O > 0) {
+				// bumpers
+				gameContext.beginPath();
+				gameContext.arc(0, 0, objects[i].B, 0, 7);
+				gameContext.closePath();
+				gameContext.fillStyle = '#999';
+				gameContext.fill();
+			} else
+			if (objects[i].O) {
+				// ball
+				gameContext.beginPath();
+				gameContext.arc(0, 0, objects[i].B, 0, 7);
+				gameContext.closePath();
+				
+				gameContext.fillStyle = '#fff';
+				gameContext.fill();
+				gameContext.strokeStyle = "#000";
+				gameContext.lineWidth = 2;
+				gameContext.stroke();
+			} else {
+				// walls
+				gameContext.beginPath();
+				gameContext.arc(0, 0, objects[i].B, 0, 7);
+				gameContext.closePath();
+				gameContext.fillStyle = '#666';
+				gameContext.fill();
+			}
+		}
+
+		// Rectangle
+		else {
+			// draw flippers
+			if (objects[i].O == 1) {
+				gameContext.beginPath();
+				gameContext.arc(0, 0, 28, 1.6, 4.6, objects[i].G < 0);
+				gameContext.arc(objects[i].G > 0 ? 150 : -150, 12, 12, 4.6, 1.6, objects[i].G < 0);
+				gameContext.closePath();
+				
+				gameContext.fillStyle = '#bbb';
+				gameContext.fill();
+				gameContext.strokeStyle = "#fff";
+				gameContext.lineWidth = 6;
+				gameContext.stroke();
+			} else if (objects[i].O == 2) {
+				gameContext.fillStyle = '#bbb';
+				gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+			} else if (objects[i].O == 3) {
+				
+			} else {
+				gameContext.fillStyle = '#666';
+				gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+			}
+		}
+		
+		gameContext.restore();
+		
+		// Update position/rotation
+		objects[i].V = add(objects[i].V, scale(objects[i].A, 1/60));
+		moveShape(objects[i], scale(objects[i].V, 1/60));
+		objects[i].v += objects[i].a * 1/60;
+		rotateShape(objects[i], objects[i].v * 1/60);
+	}
+
+	// Debug display
+	if (debug) {
+		for(i = objects.length; i--;){
+			gameContext.save();
+			gameContext.translate(objects[i].C.x, objects[i].C.y);
+			gameContext.rotate(objects[i].G);
+			
+			// Circle
+			if (!objects[i].T) {
+				gameContext.beginPath();
+				gameContext.arc(0, 0, objects[i].B, 0, 7);
+				gameContext.lineTo(0, 0);
+				gameContext.closePath();
+				if (debugFills) {
+					if (objects[i].O >= 0) {
+						gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
+						gameContext.fill();
+					}
+				}
+				gameContext.lineWidth = 2;
+				gameContext.strokeStyle = "#0f0";
+				gameContext.stroke();
+			}
+	
+			// Rectangle
+			else {
+				if (debugFills) {
+					if (objects[i].O >= 0) {
+						gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
+						gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+					}
+				}
+				gameContext.lineWidth = 2;
+				gameContext.strokeStyle = "#0f0";
+				gameContext.strokeRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+			}
+			
+			gameContext.restore();
+		}
+	}
+};
 
 
 

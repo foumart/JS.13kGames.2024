@@ -6,7 +6,6 @@ const gameContext = gameCanvas.getContext("2d");
 
 const mobile = navigator.userAgent.search('Mobile') > 0;
 let state = 0;
-const frameLength = 8;
 
 // global sizes
 const hardWidth = 1080;
@@ -73,20 +72,30 @@ function onKeyDown(event) {//console.log(event.keyCode)
 		keysHeld.push(32);
 		chargerHandler();
 	} else if (event.keyCode == 82) {
-		for (let i = 0; i < balls.length; i++) {
-			let ball = balls[i];
-			if (ball.C.y > 1850 || ball.C.y < 0 || ball.C.x > 1060 || ball.C.x < 0) {
-				ball.C.x = ballLaunchX;
-				ball.C.y = ballLaunchY;
-				ball.G = 0;
-				ball.V.x = 0;
-				ball.V.y = 0;
-				ball.v = 0;
-				break;
-			}
-		}
+		resetBall();
 	} else if (event.keyCode == 13) {
 		debugger
+	}
+}
+
+function touchStartHandler(event) {console.log(event.target.id);
+	//if (event.target == menuDiv.firstChild || event.target == menuDiv.children[1]) return;
+	if (state == 0) {
+		state = 1;
+	} else {
+
+	}
+}
+
+function touchEndHandler(event) {//console.log(event.target);
+	// release launcher
+	if (launcher.charge && !launcher.ballLaunched) {
+		launcher.checkLauncherInteractionEnd();
+	}
+	// release flippers
+	else {
+		flipperL.checkInteractionEnd();
+		flipperR.checkInteractionEnd();
 	}
 }
 
@@ -150,6 +159,8 @@ function createUI() {
 	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1700px;transform:scale(0.9,1)");
 	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1760px;transform:scale(0.9,1)");
 	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1820px;transform:scale(0.9,1)");
+	generateUIButton(4, leftFlipperHandler, "position:fixed;left:140px;top:1750px;transform:scale(3)");
+	generateUIButton(4, rightFlipperHandler, "position:fixed;left:760px;top:1750px;transform:scale(3)");
 	generateUIButton(0, toggleFullscreen, "float:right");
 	generateUIButton(1, toggleSound, "float:left");
 	state = 0;
@@ -157,7 +168,7 @@ function createUI() {
 
 function generateUIButton(code, handler, style) {
 	const button = document.createElement('div');
-	button.addEventListener("mousedown", handler.bind(this));
+	button.addEventListener(mobile ? "touchstart" : "mousedown", handler.bind(this));
 	button.innerHTML = getEmojiCode(code);
 	button.className = "button";
 	button.style = style;

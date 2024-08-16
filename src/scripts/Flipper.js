@@ -1,9 +1,9 @@
 class Flipper {
 	constructor(x, y, width, height, rotation) {
-		this.body = Rectangle(Vec2(x, y), width, height, 0, 1, defaultRestitution, 1);
+		this.body = Rectangle(Vec2(x, y), width, height, 0, 1, defaultRestitution, Bounce.flipper);
 		rotateShape(this.body, rotation);
 		this.rotation = rotation;
-		this.tip = Circle(this.updateFlipperTip(), height / 2, 0, 1, defaultRestitution, 1);
+		this.tip = Circle(this.updateFlipperTip(), height / 2, 0, 1, defaultRestitution, Bounce.flipper);
 		//this.holdingFlipper;
 		//this.releasedFlipper;
 		this.releaseObj = {};

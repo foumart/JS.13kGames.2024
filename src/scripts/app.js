@@ -1,11 +1,21 @@
 const mainDiv = document.getElementById("mainDiv");
+const uiDiv = document.getElementById("uiDiv");
 const gameDiv = document.getElementById("gameDiv");
 const menuDiv = document.getElementById("menuDiv");
 const gameCanvas = document.getElementById("gameCanvas");
 const gameContext = gameCanvas.getContext("2d");
 
+menuDiv.style = gameDiv.style = uiDiv.style = 'width:1080px;height:1920px';
+//menuDiv.style.cursor = 'pointer';//'height:120px';
+
+const staticCanvas = document.getElementById("staticCanvas");
+const staticContext = staticCanvas.getContext("2d");
+//staticCanvas.style.opacity = gameCanvas.style.opacity = gameDiv.style.opacity = .6;
+staticCanvas.style.filter = "drop-shadow(9px 9px 0 rgba(160,128,142,0.5))";
+
 const mobile = navigator.userAgent.search('Mobile') > 0;
 let state = 0;
+let paused = false;
 
 // global sizes
 const hardWidth = 1080;
@@ -69,10 +79,27 @@ function onKeyDown(event) {//console.log(event.keyCode)
 		keysHeld.push(39);
 		rightFlipperHandler();
 	} else if (event.keyCode == 32 && keysHeld.indexOf(32) == -1) {
-		keysHeld.push(32);
-		chargerHandler();
-	} else if (event.keyCode == 82) {
-		resetBall();
+		if (state == 0) {
+			// temp debug
+			/*balls[0].C.x = 750;
+			balls[0].C.y = 900;
+			balls[0].V.x = -150;*/
+			balls[0].C.x = 130;
+			balls[0].C.y = 200;
+			balls[0].V.x = 150;
+			balls[0].V.y = -450;
+
+			launcher.ballLaunched = true;
+			balls[0].R = defaultRestitution;
+			switchState();
+		}  else if (event.keyCode == 80) {// P pause
+			paused = !paused;
+		} else if (event.keyCode == 82) {// R reset
+			resetBall(true);
+		} else {
+			keysHeld.push(32);
+			chargerHandler();
+		}
 	} else if (event.keyCode == 13) {
 		debugger
 	}
@@ -81,6 +108,14 @@ function onKeyDown(event) {//console.log(event.keyCode)
 function touchStartHandler(event) {console.log(event.target.id);
 	//if (event.target == menuDiv.firstChild || event.target == menuDiv.children[1]) return;
 	if (state == 0) {
+		switchState();
+	} else {
+
+	}
+}
+
+function switchState() {
+	if (!state) {
 		state = 1;
 	} else {
 
@@ -154,25 +189,25 @@ function toggleFullscreen(e) {
 function createUI() {
 	menuDiv.innerHTML = "";
 	clearInterval(interval);
-	generateUIButton(2, chargerHandler, "position:fixed;left:980px");
-	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1640px;transform:scale(0.9,1)");
-	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1700px;transform:scale(0.9,1)");
-	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1760px;transform:scale(0.9,1)");
-	generateUIButton(3, chargerHandler, "position:fixed;left:980px;top:1820px;transform:scale(0.9,1)");
-	generateUIButton(4, leftFlipperHandler, "position:fixed;left:140px;top:1750px;transform:scale(3)");
-	generateUIButton(4, rightFlipperHandler, "position:fixed;left:760px;top:1750px;transform:scale(3)");
-	generateUIButton(0, toggleFullscreen, "float:right");
-	generateUIButton(1, toggleSound, "float:left");
+	generateUIButton(gameDiv, 2, chargerHandler, "position:fixed;left:988px");
+	generateUIButton(gameDiv, 3, chargerHandler, "position:fixed;left:988px;top:1645px;transform:scale(0.9,1)");
+	generateUIButton(gameDiv, 3, chargerHandler, "position:fixed;left:988px;top:1705px;transform:scale(0.9,1)");
+	generateUIButton(gameDiv, 3, chargerHandler, "position:fixed;left:988px;top:1765px;transform:scale(0.9,1)");
+	generateUIButton(gameDiv, 3, chargerHandler, "position:fixed;left:988px;top:1825px;transform:scale(0.9,1)");
+	generateUIButton(gameDiv, 4, leftFlipperHandler, "position:fixed;left:87px;top:1715px;transform:scale(1.5);padding:40px 90px");
+	generateUIButton(gameDiv, 4, rightFlipperHandler, "position:fixed;left:658px;top:1715px;transform:scale(1.5);padding:40px 90px");
+	generateUIButton(gameDiv, 0, toggleFullscreen, "float:right");
+	generateUIButton(gameDiv, 1, toggleSound, "float:right");
 	state = 0;
 }
 
-function generateUIButton(code, handler, style) {
+function generateUIButton(div, code, handler, style) {
 	const button = document.createElement('div');
 	button.addEventListener(mobile ? "touchstart" : "mousedown", handler.bind(this));
 	button.innerHTML = getEmojiCode(code);
 	button.className = "button";
 	button.style = style;
-	menuDiv.appendChild(button);
+	div.appendChild(button);
 }
 
 function resize(e) {

@@ -1,6 +1,5 @@
-const frameLength = 8;
-//var frameCount = 0;
-//https://stackoverflow.com/questions/19764018/controlling-fps-with-requestanimationframe
+var physicsFrameRate = 120;
+var animationFrameRate = 120;
 
 // MINI 2D PHYSICS
 // ===============
@@ -19,7 +18,7 @@ var distance = (v,w) => length(substract(v,w));
 var offsetTo = (angle, distance) => Vec2(Math.cos(angle) * distance, Math.sin(angle) * distance);
 
 // Gravity
-var mGravity = Vec2(0, 300);
+var mGravity = Vec2(0, 1200);
 
 // All shapes
 var objects = [];
@@ -45,10 +44,11 @@ var setInfo = (collision, D, N, S) => {
 };
 
 // New shape
-var RigidShape = (C, mass, F, R, T, B, W, H, shape, checkBounce) => {
+var RigidShape = (C, mass, F, R, T, B, W, H, shape, checkBounce, priority) => {
 	shape = {
 		T, // 0 circle / 1 rectangle
 		C, // center
+		D: Vec2(0, 0),
 		F, // friction
 		R, // restitution (bouncing)
 		M: mass ? 1 / mass : 0, // inverseMass (0 if immobile)
@@ -71,6 +71,7 @@ var RigidShape = (C, mass, F, R, T, B, W, H, shape, checkBounce) => {
 			Vec2(C.x - W / 2, C.y + H / 2)
 		],
 		O: checkBounce, // method to call on collision with another object that have checkBounce (O = 1) set
+		P: priority
 	};
 	
 	// Prepare rectangle
@@ -366,9 +367,8 @@ var resolveCollision = (s1, s2, collisionInfo) => {
 	}
 
 	// compute and apply response impulses for each object  
-	var
-	newRestituion = Math.min(s1.R, s2.R),
-	newFriction = Math.min(s1.F, s2.F),
+	var newRestituion = Math.min(s1.R, s2.R),
+		newFriction = Math.min(s1.F, s2.F),
 
 	// R cross N
 	R1crossN = cross(r1, n),
@@ -380,7 +380,7 @@ var resolveCollision = (s1, s2, collisionInfo) => {
 
 	// impulse is in direction of normal ( from s1 to s2)
 	impulse = scale(n, jN);
-	
+
 	// impulse = F dt = m * ?v
 	// ?v = impulse / m
 	s1.V = substract(s1.V, scale(impulse, s1.M));
@@ -407,12 +407,120 @@ var resolveCollision = (s1, s2, collisionInfo) => {
 };
 
 var runPhysics = () => {
+	// draw static elements
+	drawStaticElements(staticCanvas, staticContext);
+
 	// Loop
-	setInterval( animate, frameLength );
-	//requestAnimationFrame( animate );
+	setInterval( advance, 1000 / physicsFrameRate );
+	//requestAnimationFrame( advance );
+
+	TweenFX.addTimedCallback( animate, 1000 / animationFrameRate );
+	//advance();
 }
 
-var animate = (i,j,k) => {
+var advance = (i,j,k) => {
+	if (paused) return;
+
+	balls.forEach(ball => {
+		ball.D.x = ball.C.x;
+		ball.D.y = ball.C.y;
+	});
+
+	// Compute collisions
+	//const collisions = [];
+	for(i = objects.length; i--;){
+		for(j = objects.length; j-- > i;){
+
+			// Test bounds
+			if(boundTest(objects[i], objects[j]) && i != j){
+
+				// Test collision
+				if(testCollision(objects[i], objects[j], collisionInfo)){
+
+					// Make sure the normal is always from object[i] to object[j]
+					if(dot(collisionInfo.N, substract(objects[j].C, objects[i].C)) < 0){
+						collisionInfo = {
+							D: collisionInfo.D,
+							N: scale(collisionInfo.N, -1),
+							S: collisionInfo.E,
+							E: collisionInfo.S
+						};
+					}
+
+					// Send bounce event
+					if (objects[i].O && !(objects[i].O > 0) && objects[i].R && objects[j].O) {
+						//collisions.push([objects[i], objects[j]]);
+						objects[i].O(objects[j], objects[i]);
+						//if (objects[i].R != defaultRestitution) break;
+					}
+					if (objects[j].O && !(objects[j].O > 0) && objects[j].R && objects[i].O) {
+						//collisions.push([objects[j], objects[i]]);
+						objects[j].O(objects[i], objects[j]);
+						//if (objects[i].R != defaultRestitution) break;
+					}
+
+					// Resolve collision
+					resolveCollision(objects[i], objects[j], collisionInfo);
+				}
+			}
+		}
+
+		// Update objects position/rotation
+		objects[i].V = add(objects[i].V, scale(objects[i].A, 1/physicsFrameRate));
+		moveShape(objects[i], scale(objects[i].V, 1/physicsFrameRate));
+		objects[i].v += objects[i].a * 1/physicsFrameRate;
+		rotateShape(objects[i], objects[i].v * 1/physicsFrameRate);
+	}
+
+	//if (collisions.length) console.log(collisions);
+	/*collisions.forEach(collisionObject => {
+		collisionObject[0].O(collisionObject[1], collisionObject[0]);
+	});*/
+
+	balls.forEach(ball => {
+		if (Math.round(ball.C.y) > 1960) {
+			// a ball has fallen
+			let ballsInMotion = 0;
+			balls.forEach(ballInMotion => {
+				if (ballInMotion.v) {
+					ballsInMotion ++;
+				}
+			});
+			if (ballsInMotion == 1) resetBall();
+			else {
+				balls.splice(balls.indexOf(ball), 1);
+				removeObject(ball);
+			}
+		} else {
+			if (Math.round(ball.C.x) == 555 && ball.D.y < 200 && ball.C.y > 200) {
+				//console.log("GG1");debugger
+				//Switcher.
+			}
+		
+			if (Math.round(ball.C.x) == 475 && ball.D.y < 190 && ball.C.y > 190) {
+				//console.log("GG2");debugger
+			}
+		
+			if (Math.round(ball.C.x) == 395 && ball.D.y < 180 && ball.C.y > 180) {
+				//console.log("GG3");debugger
+			}
+		
+			if (Math.round(ball.C.x) == 315 && ball.D.y < 160 && ball.C.y > 160) {
+				//console.log("GG4");debugger
+			}
+		}
+	});
+
+	
+
+	//console.log(balls[0].C.x, balls[0].C.y, balls[0].D.x, balls[0].D.y);
+}
+
+function animate() {
+
+	if (!state && step) return;
+
+	step ++;
 
 	if (debug) {
 		if (!fps) {
@@ -430,68 +538,123 @@ var animate = (i,j,k) => {
 			frame = 0;
 		}
 	}
-	
-	if (!state && step) return;
 
-	step ++;
+	drawDynamicElements(gameCanvas, gameContext);
+}
+
+function drawDynamicElements(canvas, context) {
 
 	// Reset
-	gameCanvas.width ^= 0;
-
-	// Compute collisions
-	//for(k = 9; k--;){
-		for(i = objects.length; i--;){
-			for(j = objects.length; j-- > i;){
-				
-				// Test bounds
-				if(boundTest(objects[i], objects[j]) && i != j){
-					
-					// Test collision
-					if(testCollision(objects[i], objects[j], collisionInfo)){
-						
-						// Make sure the normal is always from object[i] to object[j]
-						if(dot(collisionInfo.N, substract(objects[j].C, objects[i].C)) < 0){
-							collisionInfo = {
-								D: collisionInfo.D,
-								N: scale(collisionInfo.N, -1),
-								S: collisionInfo.E,
-								E: collisionInfo.S
-							};
-						}
-
-						// Send bounce event
-						if (objects[i].O && !(objects[i].O > 0) && objects[i].R && objects[j].O) {
-							objects[i].O(objects[j], objects[i]);
-						}
-						if (objects[j].O && !(objects[j].O > 0) && objects[j].R && objects[i].O) {
-							objects[j].O(objects[i], objects[j]);
-						}
-						
-						// Resolve collision
-						resolveCollision(objects[i], objects[j], collisionInfo);
-					}
-				}
-			}
-		}
-	//}
+	//canvas.width ^= 0;
+	context.clearRect(0, 0, canvas.width, canvas.height);
 
 	// Draw / Update scene
-	for(i = objects.length; i--;){
-		
+	for(let i = objects.length; i--;) {
+
+		context.save();
+		context.translate(objects[i].C.x, objects[i].C.y);
+		context.rotate(objects[i].G);
+
+		// Circle
+		if (!objects[i].T) {
+			if (objects[i].O == Bounce.flipper) {
+				// flipper tip
+			} else
+			if (objects[i].O > 0) {
+				// bumpers
+			} else
+			if (objects[i].O) {
+				// ball
+				context.beginPath();
+				context.arc(0, 0, objects[i].B, 0, 7);
+				context.closePath();
+
+				context.fillStyle = '#fff';
+				context.fill();
+			} else {
+				// walls
+			}
+		}
+
+		// Rectangle
+		else {
+			// draw flippers
+			if (objects[i].O == Bounce.flipper) {
+				context.beginPath();
+				context.arc(0, 0, 28, 1.6, 4.6, objects[i].G < 0);
+				context.arc(objects[i].G > 0 ? 150 : -150, 12, 12, 4.6, 1.6, objects[i].G < 0);
+				context.closePath();
+
+				context.fillStyle = '#bbb';
+				context.fill();
+				context.strokeStyle = "#fff";
+				context.lineWidth = 6;
+				context.stroke();
+			}
+		}
+
+		context.restore();
+	}
+
+	// Debug display
+	if (debug) {
+		for(let i = objects.length; i--;){
+			context.save();
+			context.translate(objects[i].C.x, objects[i].C.y);
+			context.rotate(objects[i].G);
+
+			// Circle
+			if (!objects[i].T) {
+				context.beginPath();
+				context.arc(0, 0, objects[i].B, 0, 7);
+				context.lineTo(0, 0);
+				context.closePath();
+				if (debugFills) {
+					if (objects[i].O >= 0) {
+						context.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
+						context.fill();
+					}
+				}
+				context.lineWidth = 2;
+				context.strokeStyle = "#0f0";
+				context.stroke();
+			}
+
+			// Rectangle
+			else {
+				if (debugFills) {
+					if (objects[i].O >= 0) {
+						context.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
+						context.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+					}
+				}
+				context.lineWidth = 2;
+				context.strokeStyle = "#0f0";
+				context.strokeRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+			}
+			
+			context.restore();
+		}
+	}
+};
+
+function drawStaticElements(canvas, context) {
+
+	// Reset
+	//canvas.width ^= 0;
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+	// Draw / Update scene
+	for(let i = objects.length; i--;) {
+
 		// Draw
 		// ----
+		context.save();
+		context.translate(objects[i].C.x, objects[i].C.y);
+		context.rotate(objects[i].G);
+		context.lineWidth = 2;
+		context.strokeStyle = '#ffffff';
 
-		// draw ball
-		/*if (objects[i] == launcher.chargingBall) {
-			drawUnit(1, gameContext, objects[i].C.x - 28, objects[i].C.y - 28, 2.6);
-		}*/
-		
-		gameContext.save();
-		gameContext.translate(objects[i].C.x, objects[i].C.y);
-		gameContext.rotate(objects[i].G);
-		gameContext.lineWidth = 2;
-		gameContext.strokeStyle = '#ffffff';
-		
 		// Circle
 		if (!objects[i].T) {
 			if (objects[i].O == 1) {
@@ -499,30 +662,21 @@ var animate = (i,j,k) => {
 			} else
 			if (objects[i].O > 0) {
 				// bumpers
-				gameContext.beginPath();
-				gameContext.arc(0, 0, objects[i].B, 0, 7);
-				gameContext.closePath();
-				gameContext.fillStyle = '#999';
-				gameContext.fill();
+				context.beginPath();
+				context.arc(0, 0, objects[i].B, 0, 7);
+				context.closePath();
+				context.fillStyle = '#999';
+				context.fill();
 			} else
 			if (objects[i].O) {
 				// ball
-				gameContext.beginPath();
-				gameContext.arc(0, 0, objects[i].B, 0, 7);
-				gameContext.closePath();
-				
-				gameContext.fillStyle = '#fff';
-				gameContext.fill();
-				gameContext.strokeStyle = "#000";
-				gameContext.lineWidth = 2;
-				gameContext.stroke();
 			} else {
 				// walls
-				gameContext.beginPath();
-				gameContext.arc(0, 0, objects[i].B, 0, 7);
-				gameContext.closePath();
-				gameContext.fillStyle = '#666';
-				gameContext.fill();
+				context.beginPath();
+				context.arc(0, 0, objects[i].B, 0, 7);
+				context.closePath();
+				context.fillStyle = '#666';
+				context.fill();
 			}
 		}
 
@@ -530,82 +684,28 @@ var animate = (i,j,k) => {
 		else {
 			// draw flippers
 			if (objects[i].O == 1) {
-				gameContext.beginPath();
-				gameContext.arc(0, 0, 28, 1.6, 4.6, objects[i].G < 0);
-				gameContext.arc(objects[i].G > 0 ? 150 : -150, 12, 12, 4.6, 1.6, objects[i].G < 0);
-				gameContext.closePath();
-				
-				gameContext.fillStyle = '#bbb';
-				gameContext.fill();
-				gameContext.strokeStyle = "#fff";
-				gameContext.lineWidth = 6;
-				gameContext.stroke();
+				// flipper
 			} else if (objects[i].O == 2) {
-				gameContext.fillStyle = '#bbb';
-				gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+				context.fillStyle = '#bbb';
+				context.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
 			} else if (objects[i].O == 3) {
 				
-			} else {
-				gameContext.fillStyle = '#666';
-				gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+			}/* else if (objects[i].O == Bounce.hole) {
+				
+			} */else {
+				context.fillStyle = '#666';
+				context.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
 			}
 		}
-		
-		gameContext.restore();
-		
-		// Update position/rotation
-		objects[i].V = add(objects[i].V, scale(objects[i].A, 1/60));
-		moveShape(objects[i], scale(objects[i].V, 1/60));
-		objects[i].v += objects[i].a * 1/60;
-		rotateShape(objects[i], objects[i].v * 1/60);
-	}
 
-	// Debug display
-	if (debug) {
-		for(i = objects.length; i--;){
-			gameContext.save();
-			gameContext.translate(objects[i].C.x, objects[i].C.y);
-			gameContext.rotate(objects[i].G);
-			
-			// Circle
-			if (!objects[i].T) {
-				gameContext.beginPath();
-				gameContext.arc(0, 0, objects[i].B, 0, 7);
-				gameContext.lineTo(0, 0);
-				gameContext.closePath();
-				if (debugFills) {
-					if (objects[i].O >= 0) {
-						gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
-						gameContext.fill();
-					}
-				}
-				gameContext.lineWidth = 2;
-				gameContext.strokeStyle = "#0f0";
-				gameContext.stroke();
-			}
-	
-			// Rectangle
-			else {
-				if (debugFills) {
-					if (objects[i].O >= 0) {
-						gameContext.fillStyle = objects[i].O == 1 ? 'green' : objects[i].O == 2 ? '#c00' : '#800';
-						gameContext.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-					}
-				}
-				gameContext.lineWidth = 2;
-				gameContext.strokeStyle = "#0f0";
-				gameContext.strokeRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
-			}
-			
-			gameContext.restore();
-		}
+		context.restore();
 	}
 };
 
-
-
 // New circle
-var Circle = (center, radius, mass, friction, restitution, checkBounce = 0) => RigidShape(center, mass, friction, restitution, 0, radius, null, null, null, checkBounce);
+var Circle = (center, radius, mass, friction, restitution, checkBounce = 0, priority = 0) =>
+	RigidShape(center, mass, friction, restitution, 0, radius, null, null, null, checkBounce, priority);
 
 // New rectangle
-var Rectangle = (center, width, height, mass, friction, restitution, checkBounce = 0) => RigidShape(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height, null, checkBounce);
+var Rectangle = (center, width, height, mass, friction, restitution, checkBounce = 0, priority = 0) =>
+	RigidShape(center, mass, friction, restitution, 1, Math.hypot(width, height)/2, width, height, null, checkBounce, priority);

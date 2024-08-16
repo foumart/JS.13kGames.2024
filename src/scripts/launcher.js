@@ -1,8 +1,12 @@
 class Launcher {
 
 	constructor(amount) {
-		this.body = Rectangle(Vec2(1030, 1650), 60, 500, 0, 1, 0, 3);
+		this.body = Rectangle(Vec2(1030, 1650), 60, 500, 0, 1, 0, Bounce.launcher);
 		this.amount = amount;
+		this.createNewBall();
+	}
+
+	createNewBall() {
 		this.chargingBall = Circle(Vec2(ballLaunchX, ballLaunchY), 30, 10, 1, 0, checkBounce);
 		balls.push(this.chargingBall);
 		this.normalizeCharger();
@@ -10,8 +14,8 @@ class Launcher {
 	}
 
 	normalizeCharger() {
-		menuDiv.firstChild.style.transform = `scaleY(4)`;
-		menuDiv.firstChild.style.top = `1480px`;
+		gameDiv.firstChild.style.transform = `scaleY(4)`;
+		gameDiv.firstChild.style.top = `1485px`;
 	}
 	
 	chargeHandler(event) {
@@ -26,8 +30,8 @@ class Launcher {
 					moveShape(this.body, Vec2(0, diff * 2));
 					moveShape(this.chargingBall, Vec2(0, diff * 2));
 					// modify emoji symbol for the launcher
-					menuDiv.firstChild.style.transform = `scaleY(${4 - this.charge.strength / 32})`;
-					menuDiv.firstChild.style.top = `${1480 + this.charge.strength}px`;
+					gameDiv.firstChild.style.transform = `scaleY(${4 - this.charge.strength / 32})`;
+					gameDiv.firstChild.style.top = `${1485 + this.charge.strength}px`;
 				}
 			);
 			this.charging = true;
@@ -57,11 +61,14 @@ class Launcher {
 				this.charge = null;
 			});
 		});
+
+		//releaseAllBalls();
 	}
 
 	addBlocker() {
 		if (!this.blocker) {
-			this.blocker = Circle(Vec2(1032, 878), 18, 0, 0, 1);
+			this.blocker = Rectangle(Vec2(1032, 602), 12, 120, 0, 0, 1);
+			rotateShape(this.blocker, 0.7);
 		}
 	}
 

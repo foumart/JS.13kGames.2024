@@ -1,6 +1,6 @@
 class TweenFX {
 
-	static to(_element, _duration, _object, _ease, _update, _callback) {
+	static to(_element, _duration, _object, _ease, _update, _callback, _timeout = 16.66) {
 		// 0 (default): ease in-out
 		// 1: ease in
 		// 2: ease out
@@ -21,7 +21,10 @@ class TweenFX {
 		const element = _element;
 
 		const tween = () => {
-			if (element.killed) return;
+			if (element.killed) {
+				//TweenFX.callbacks.splice(TweenFX.callbacks.indexOf(tween), 1);
+				return;
+			}
 			if (count < duration) {
 				count ++;
 				tweenedKeys.forEach((key, i) => {
@@ -33,7 +36,8 @@ class TweenFX {
 					}
 				});
 				if (_update != null) _update();
-				setTimeout(tween, frameLength);
+				//TweenFX.addTimedCallback(tween);
+				setTimeout(tween, _timeout);
 			} else if (_callback != null) {
 				_callback();
 			}
@@ -48,6 +52,49 @@ class TweenFX {
 
 		element.killed = false;
 		if (_update != null) _update();
-		setTimeout(tween, frameLength);
+		//TweenFX.addTimedCallback(tween);
+		//requestAnimationFrame(tween);
+		setTimeout(tween, _timeout);
+	}
+
+	static addTimedCallback(callback, frameLengthInMs) {
+		if (!TweenFX.callbacks) {
+			TweenFX.callbacks = [];
+			TweenFX.entries = [];
+			requestAnimationFrame(TweenFX.checkFrame);
+		}
+
+		if (TweenFX.callbacks.indexOf(callback) == -1) {
+			TweenFX.callbacks.push(callback);
+			TweenFX.entries.push([frameLengthInMs, Date.now(), Date.now()]);
+		} else {
+			console.warn("already animating")
+		}
+	}
+
+	static removeTimedCallback(callback) {
+		const entryId = TweenFX.callbacks.indexOf(callback);
+		TweenFX.callbacks.splice(entryId, 1);
+		TweenFX.entries.splice(entryId, 1);
+	}
+
+	static checkFrame() {
+		// loop through all callbacks
+		TweenFX.callbacks.forEach((callback, index) => {
+			// calc elapsed time since last loop
+			TweenFX.now = Date.now();
+			TweenFX.elapsed = TweenFX.now - TweenFX.entries[index][1];
+
+			// if enough time has elapsed, draw the next frame
+			if (TweenFX.elapsed >= TweenFX.entries[index][0]) {
+				// Get ready for next frame by setting then=now, but also adjust for your
+				// specified fpsInterval not being a multiple of RAF's interval (16.7ms)
+				TweenFX.entries[index][1] = TweenFX.now - (TweenFX.elapsed % TweenFX.entries[index][0]);
+				callback();
+			}
+		});
+
+		// request another frame
+		requestAnimationFrame(TweenFX.checkFrame);
 	}
 }

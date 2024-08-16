@@ -18,25 +18,25 @@ canvas {
 	pointer-events: none;
 }
 
-#gameDiv {
+#uiDiv {
 	font-family: emoji, Arial;
 	font-size: 64px;
 }
 
-#mainDiv {
+/* #mainDiv {
 	background-color: #ccc;
-}
+} */
 
-#menuDiv {
+/* #gameDiv {
 	text-align: center;
-}
+} */
 
 .button {
 	position: relative;
 	font-family: emoji, Arial;
 	font-size: 64px;
 	width: 75px;
-	margin: 12spx;
+	margin: 9px;
 }
 
 @font-face {

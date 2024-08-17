@@ -18,18 +18,22 @@ canvas {
 	pointer-events: none;
 }
 
+#pixelCanvas {
+	image-rendering: pixelated;
+}
+
 #uiDiv {
 	font-family: emoji, Arial;
 	font-size: 64px;
 }
 
-/* #mainDiv {
-	background-color: #ccc;
-} */
+/*#mainDiv {
+	background-color: #666;
+}*/
 
-/* #gameDiv {
+/*#gameDiv {
 	text-align: center;
-} */
+}*/
 
 .button {
 	position: relative;

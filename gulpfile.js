@@ -218,6 +218,7 @@ function pack(callback) {
 	let stream = src('src/index.html', { allowEmpty: true });
 
 	stream
+		.pipe(gulpif(pwa, replace('let _debug;', `let _debug = ${debug ? 'true' : 'false'};`, replaceOptions)))
 		.pipe(replace('{TITLE}', title, replaceOptions))
 		.pipe(replace('{ICON_EXTENSION}', iconExtension, replaceOptions))
 		.pipe(replace('{ICON_TYPE}', iconType, replaceOptions))

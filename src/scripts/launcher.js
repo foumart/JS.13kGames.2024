@@ -1,7 +1,7 @@
 class Launcher {
 
 	constructor(amount) {
-		this.body = Rectangle(Vec2(1030, 1650), 60, 500, 0, 1, 0, Bounce.launcher);
+		this.body = Rectangle(Vec2(ballLaunchX, 1650), 60, 500, 0, 1, 0, Bounce.launcher);
 		this.amount = amount;
 		this.createNewBall();
 	}
@@ -23,6 +23,14 @@ class Launcher {
 			this.charge = { strength: 5 };
 			TweenFX.to(this.charge, 99, {strength: 90}, 2,
 				() => {
+					if (!this.charge) {
+						this.charge = { strength: 1 };
+						this.charging = false;
+						this.ballLaunched = false;
+						//moveShape(this.body, Vec2(0, (this.charge.strength - this.body.R) * 2));
+						//moveShape(this.chargingBall, Vec2(0, (this.charge.strength - this.body.R) * 2));
+						return;
+					}
 					// alter physics while charging
 					const diff = this.charge.strength - this.body.R;
 					this.body.R = this.charge.strength;
@@ -67,7 +75,7 @@ class Launcher {
 
 	addBlocker() {
 		if (!this.blocker) {
-			this.blocker = Rectangle(Vec2(1032, 602), 12, 120, 0, 0, 1);
+			this.blocker = Rectangle(Vec2(ballLaunchX, 606), 12, 120, 0, 0, 1);
 			rotateShape(this.blocker, 0.7);
 		}
 	}

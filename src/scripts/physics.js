@@ -1,6 +1,14 @@
 var physicsFrameRate = 120;
 var animationFrameRate = 120;
 
+var boardStrokeStyle = '#98a';
+var boardCornerStoneColor = '#6ff';
+var boardKnobColor = '#6f6';
+var boardHoleColor = '#ff6';
+var boardBumperColor = "rgba(255, 255, 255, 0.5)";
+var boardKickerAreaColor = '#fe9';
+var boardStrokeColor = '#999';
+
 // MINI 2D PHYSICS
 // ===============
 
@@ -18,11 +26,11 @@ var distance = (v,w) => length(substract(v,w));
 var offsetTo = (angle, distance) => Vec2(Math.cos(angle) * distance, Math.sin(angle) * distance);
 
 // Gravity
-var mGravity = Vec2(0, 1200);
+var mGravity = Vec2(0, 1200);//2500
 
 // All shapes
 var objects = [];
-var debug = false;//_debug;
+var debug;
 var debugFills = false;
 
 var step = 0;
@@ -568,9 +576,15 @@ function drawDynamicElements(canvas, context) {
 				context.beginPath();
 				context.arc(0, 0, objects[i].B, 0, 7);
 				context.closePath();
-
-				context.fillStyle = '#fff';
-				context.fill();
+				// ball metallic gradient
+				const gradient = context.createRadialGradient(-10, -10, 5, -5, -5, 35);
+				gradient.addColorStop(0.1, "white");
+				gradient.addColorStop(0.75, "#bbb");
+				gradient.addColorStop(1, "white");
+				context.fillStyle = gradient;
+				//context.strokeStyle = '#000';
+				//context.lineWidth = 1;
+				context.fill();//context.stroke();
 			} else {
 				// walls
 			}
@@ -652,21 +666,24 @@ function drawStaticElements(canvas, context) {
 		context.save();
 		context.translate(objects[i].C.x, objects[i].C.y);
 		context.rotate(objects[i].G);
-		context.lineWidth = 2;
-		context.strokeStyle = '#ffffff';
+		context.lineWidth = 5;
+		context.strokeStyle = boardStrokeStyle;
 
 		// Circle
 		if (!objects[i].T) {
 			if (objects[i].O == 1) {
 				// flipper tip
 			} else
-			if (objects[i].O > 0) {
+			if (objects[i].O > 0) {//console.warn(objects[i].O);
 				// bumpers
 				context.beginPath();
-				context.arc(0, 0, objects[i].B, 0, 7);
+				context.setLineDash([5, 10+(step%5)]);
+				context.arc(0, 0, objects[i].B + 16 - objects[i].O*2, 0, 7);
 				context.closePath();
-				context.fillStyle = '#999';
+				context.fillStyle = objects[i].O == 6 ? boardKnobColor : objects[i].O == 4 ? boardHoleColor : boardBumperColor;
 				context.fill();
+				context.strokeStyle = boardStrokeColor;
+				context.stroke();
 			} else
 			if (objects[i].O) {
 				// ball
@@ -675,8 +692,8 @@ function drawStaticElements(canvas, context) {
 				context.beginPath();
 				context.arc(0, 0, objects[i].B, 0, 7);
 				context.closePath();
-				context.fillStyle = '#666';
-				context.fill();
+				context.fillStyle = boardCornerStoneColor;
+				context.fill();context.stroke();
 			}
 		}
 
@@ -686,21 +703,29 @@ function drawStaticElements(canvas, context) {
 			if (objects[i].O == 1) {
 				// flipper
 			} else if (objects[i].O == 2) {
-				context.fillStyle = '#bbb';
+				// kicker
+				context.fillStyle = boardKickerAreaColor;// yellow color hit area
 				context.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
 			} else if (objects[i].O == 3) {
 				
 			}/* else if (objects[i].O == Bounce.hole) {
 				
 			} */else {
-				context.fillStyle = '#666';
+				context.fillStyle = randomGreyHex(86, 96);
 				context.fillRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
+				context.strokeRect(-objects[i].W / 2, -objects[i].H / 2, objects[i].W, objects[i].H);
 			}
 		}
 
 		context.restore();
 	}
 };
+
+function randomGreyHex(topLimit = 0, bottomLimit = 0) {
+	var v = (bottomLimit + Math.random()*(256-bottomLimit-topLimit)|0).toString(16);
+	var w = (parseInt(v,16)+0x0e).toString(16);
+	return "#" + v + w + w;
+}
 
 // New circle
 var Circle = (center, radius, mass, friction, restitution, checkBounce = 0, priority = 0) =>

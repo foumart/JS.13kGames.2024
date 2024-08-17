@@ -3,7 +3,7 @@ class Flipper {
 		this.body = Rectangle(Vec2(x, y), width, height, 0, 1, defaultRestitution, Bounce.flipper);
 		rotateShape(this.body, rotation);
 		this.rotation = rotation;
-		this.tip = Circle(this.updateFlipperTip(), height / 2, 0, 1, defaultRestitution, Bounce.flipper);
+		this.tip = Circle(this.updateFlipperTip(), height / 2, 0, 1, defaultRestitution, Bounce.flipper, 1);
 		//this.holdingFlipper;
 		//this.releasedFlipper;
 		this.releaseObj = {};
